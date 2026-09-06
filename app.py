@@ -179,6 +179,15 @@ def ask_general_assistant(question):
             model=MODEL_NAME,
             max_tokens=500,
             messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are EchoWill, a friendly general-purpose AI assistant "
+                        "inside the EchoWill app. If asked your name or what you are, "
+                        "say you are EchoWill's General Assistant. Never say you are "
+                        "ChatGPT, OpenAI, or any other product."
+                    )
+                },
                 {"role": "user", "content": question}
             ]
         )
@@ -267,25 +276,26 @@ with tab3:
     st.subheader("🤖 Ask EchoWill Anything")
     st.caption("General AI help — this is not grounded in a specific person's archive.")
 
-    general_question = st.text_input(
-        "Your question",
-        key="general_q",
-        placeholder="Ask anything..."
-    )
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = []
 
-    general_button = st.button(
-        "Ask",
-        key="general_ask_btn",
-        type="primary",
-        disabled=not general_question.strip()
-    )
+    for msg in st.session_state.chat_history:
+        with st.chat_message(msg["role"]):
+            st.write(msg["content"])
 
-    if general_button:
-        with st.spinner("🤖 Thinking..."):
-            answer = ask_general_assistant(general_question)
+    user_input = st.chat_input("Ask anything...")
 
-        st.markdown("### 🤖 Answer")
-        st.write(answer)
+    if user_input:
+        st.session_state.chat_history.append({"role": "user", "content": user_input})
+        with st.chat_message("user"):
+            st.write(user_input)
+
+        with st.chat_message("assistant"):
+            with st.spinner("Thinking..."):
+                answer = ask_general_assistant(user_input)
+                st.write(answer)
+
+        st.session_state.chat_history.append({"role": "assistant", "content": answer})
 
 st.divider()
 st.caption("🕯️ EchoWill — Preserving memories, values and wisdom.")
